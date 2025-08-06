@@ -16,20 +16,33 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from config import MAX_CHUNK_TOKENS, CHUNK_OVERLAP_TOKENS
 
 # --- 1. FILE DOWNLOADING (For URLs) ---
-def download_file(url: str, save_dir: str = "documents_storage") -> str | None:
-    # This function remains the same for processing URLs if needed
-    print(f"Downloading file from: {url}")
-    os.makedirs(save_dir, exist_ok=True)
+def download_file(url: str, save_dir: str = "document_storage"):
+    """
+    Downloads a file from a URL and saves it locally with a clean filename.
+    """
     try:
-        response = requests.get(url, timeout=30)
-        response.raise_for_status()
-        filename = url.split('/')[-1] or str(uuid.uuid4())
-        file_path = os.path.join(save_dir, filename)
-        with open(file_path, "wb") as f: f.write(response.content)
+        # --- FIX IS HERE ---
+        # Parse the URL to get the path, and then get the base filename
+        parsed_url = urlparse(url)
+        # Use unquote to handle URL-encoded characters like '%20' for spaces
+        file_name = unquote(os.path.basename(parsed_url.path))
+        
+        # Ensure the save directory exists
+        os.makedirs(save_dir, exist_ok=True)
+        file_path = os.path.join(save_dir, file_name)
+
+        print(f"Downloading file from: {url}")
+        response = requests.get(url, stream=True)
+        response.raise_for_status()  # Raise an exception for bad status codes
+
+        with open(file_path, "wb") as f:
+            for chunk in response.iter_content(chunk_size=8192):
+                f.write(chunk)
+        
         print(f"Successfully downloaded and saved to: {file_path}")
         return file_path
     except requests.exceptions.RequestException as e:
-        print(f"Error downloading {url}: {e}")
+        print(f"Error downloading file: {e}")
         return None
 
 # --- 2. TEXT EXTRACTION (Works for any local file path) ---

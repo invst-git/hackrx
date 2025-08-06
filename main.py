@@ -114,6 +114,7 @@ async def run_submission(req: RunRequest, http_request: Request):
     
     namespace = str(uuid.uuid4())
     local_file_path = None
+    chunks_were_created = False
     
     try:
         # A. Ingest and Process
@@ -126,6 +127,7 @@ async def run_submission(req: RunRequest, http_request: Request):
         
         # B. Index Chunks
         if chunks:
+            chunks_were_created = True
             print(f"Indexing {len(chunks)} chunks into namespace: {namespace}")
             for i in tqdm(range(0, len(chunks), 100), desc="Indexing Batches"):
                 batch = chunks[i:i + 100]
@@ -150,7 +152,7 @@ async def run_submission(req: RunRequest, http_request: Request):
     finally:
         # D. Cleanup
         print("Cleaning up resources...")
-        if chunks: # Only try to delete the namespace if it was created
+        if chunks_were_created:
             try:
                 pinecone_index.delete(delete_all=True, namespace=namespace)
                 print(f"Successfully deleted namespace: {namespace}")

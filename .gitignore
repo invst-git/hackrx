@@ -1,0 +1,13 @@
+# Environment variables and secrets
+.env
+
+# Python virtual environment
+venv/
+.venv/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Temporary downloaded documents
+temp_docs/
